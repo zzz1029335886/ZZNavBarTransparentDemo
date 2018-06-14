@@ -9,19 +9,23 @@
 /* Begin PBXBuildFile section */
 		D4CFB7D920D263E80097097E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4CFB7D820D263E80097097E /* AppDelegate.swift */; };
 		D4CFB7DB20D263E80097097E /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4CFB7DA20D263E80097097E /* ViewController.swift */; };
-		D4CFB7DE20D263E80097097E /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = D4CFB7DC20D263E80097097E /* Main.storyboard */; };
 		D4CFB7E020D263E90097097E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D4CFB7DF20D263E90097097E /* Assets.xcassets */; };
 		D4CFB7E320D263E90097097E /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = D4CFB7E120D263E90097097E /* LaunchScreen.storyboard */; };
+		D4CFB7EC20D2640F0097097E /* ZZNavBarTransparent.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4CFB7EB20D2640F0097097E /* ZZNavBarTransparent.swift */; };
+		D4CFB7EE20D2645D0097097E /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = D4CFB7ED20D2645D0097097E /* Main.storyboard */; };
+		D4CFB7F020D264970097097E /* ProfileViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4CFB7EF20D264970097097E /* ProfileViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		D4CFB7D520D263E80097097E /* ZZNavBarTransparentDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ZZNavBarTransparentDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D4CFB7D820D263E80097097E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		D4CFB7DA20D263E80097097E /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
-		D4CFB7DD20D263E80097097E /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		D4CFB7DF20D263E90097097E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D4CFB7E220D263E90097097E /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		D4CFB7E420D263E90097097E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		D4CFB7EB20D2640F0097097E /* ZZNavBarTransparent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ZZNavBarTransparent.swift; sourceTree = "<group>"; };
+		D4CFB7ED20D2645D0097097E /* Main.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = Main.storyboard; sourceTree = "<group>"; };
+		D4CFB7EF20D264970097097E /* ProfileViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -54,14 +58,24 @@
 		D4CFB7D720D263E80097097E /* ZZNavBarTransparentDemo */ = {
 			isa = PBXGroup;
 			children = (
+				D4CFB7EA20D2640F0097097E /* ZZNavBarTransparent */,
 				D4CFB7D820D263E80097097E /* AppDelegate.swift */,
 				D4CFB7DA20D263E80097097E /* ViewController.swift */,
-				D4CFB7DC20D263E80097097E /* Main.storyboard */,
+				D4CFB7EF20D264970097097E /* ProfileViewController.swift */,
 				D4CFB7DF20D263E90097097E /* Assets.xcassets */,
+				D4CFB7ED20D2645D0097097E /* Main.storyboard */,
 				D4CFB7E120D263E90097097E /* LaunchScreen.storyboard */,
 				D4CFB7E420D263E90097097E /* Info.plist */,
 			);
 			path = ZZNavBarTransparentDemo;
+			sourceTree = "<group>";
+		};
+		D4CFB7EA20D2640F0097097E /* ZZNavBarTransparent */ = {
+			isa = PBXGroup;
+			children = (
+				D4CFB7EB20D2640F0097097E /* ZZNavBarTransparent.swift */,
+			);
+			path = ZZNavBarTransparent;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -122,9 +136,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D4CFB7EE20D2645D0097097E /* Main.storyboard in Resources */,
 				D4CFB7E320D263E90097097E /* LaunchScreen.storyboard in Resources */,
 				D4CFB7E020D263E90097097E /* Assets.xcassets in Resources */,
-				D4CFB7DE20D263E80097097E /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -135,22 +149,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D4CFB7EC20D2640F0097097E /* ZZNavBarTransparent.swift in Sources */,
 				D4CFB7DB20D263E80097097E /* ViewController.swift in Sources */,
 				D4CFB7D920D263E80097097E /* AppDelegate.swift in Sources */,
+				D4CFB7F020D264970097097E /* ProfileViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
-		D4CFB7DC20D263E80097097E /* Main.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				D4CFB7DD20D263E80097097E /* Base */,
-			);
-			name = Main.storyboard;
-			sourceTree = "<group>";
-		};
 		D4CFB7E120D263E90097097E /* LaunchScreen.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -282,6 +290,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				INFOPLIST_FILE = ZZNavBarTransparentDemo/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -299,6 +308,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				INFOPLIST_FILE = ZZNavBarTransparentDemo/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

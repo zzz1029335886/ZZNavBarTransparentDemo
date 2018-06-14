@@ -1,9 +1,9 @@
 //
-//  ETNavBarTransparent.swift
-//  ETNavBarTransparentDemo
+//  ZZNavBarTransparent.swift
+//  ZZNavBarTransparentDemo
 //
-//  Created by Bing on 2017/3/1.
-//  Copyright © 2017年 tanyunbing. All rights reserved.
+//  Created by zerry on 2018/6/14.
+//  Copyright © 2018年 zerry. All rights reserved.
 //
 
 import UIKit
@@ -56,16 +56,21 @@ extension UINavigationController {
     override open var preferredStatusBarStyle: UIStatusBarStyle {
         return topViewController?.preferredStatusBarStyle ?? .default
     }
-    
+
     open override func viewDidLoad() {
         UINavigationController.swizzle()
         super.viewDidLoad()
     }
     
     private static let onceToken = UUID().uuidString + "UINavigationController"
-    
+    private static let onceToken1 = UUID().uuidString + "UIViewController"
+
     class func swizzle() {
-        guard self == UINavigationController.self else { return }
+        
+        if self != UINavigationController.self {
+            
+            return
+        }
         
         DispatchQueue.once(token: onceToken) {
             let needSwizzleSelectorArr = [
@@ -89,6 +94,7 @@ extension UINavigationController {
         }
     }
     
+    
     @objc func et_updateInteractiveTransition(_ percentComplete: CGFloat) {
         guard let topViewController = topViewController, let coordinator = topViewController.transitionCoordinator else {
             et_updateInteractiveTransition(percentComplete)
@@ -98,28 +104,33 @@ extension UINavigationController {
         let fromViewController = coordinator.viewController(forKey: .from)
         let toViewController = coordinator.viewController(forKey: .to)
         
-        // Bg Alpha
-        let fromAlpha = fromViewController?.navBarBgAlpha ?? 0
-        let toAlpha = toViewController?.navBarBgAlpha ?? 0
-        let newAlpha = fromAlpha + (toAlpha - fromAlpha) * percentComplete
-        
-        
         // Tint Color
         let fromColor = fromViewController?.navBarTintColor ?? .blue
         let toColor = toViewController?.navBarTintColor ?? .blue
         let newColor = averageColor(fromColor: fromColor, toColor: toColor, percent: percentComplete)
-        
+        navigationBar.tintColor = newColor
+
         //backgruond Color
         let backgroundFromColor = fromViewController?.navBarColor
         let backgroundToColor = toViewController?.navBarColor
-        
         let backgroundColor = averageColor(fromColor: backgroundFromColor!, toColor: backgroundToColor!, percent: percentComplete)
         
-        navigationBar.tintColor = newColor
-//        navigationBar.backgroundColor = backgroundColor
-//        self.viewControllers.last?.view.backgroundColor = backgroundColor
-        
+        // Bg Alpha
+        let fromAlpha = fromViewController?.navBarBgAlpha ?? 0
+        let toAlpha = toViewController?.navBarBgAlpha ?? 0
+        let newAlpha = fromAlpha + (toAlpha - fromAlpha) * percentComplete
         setNeedsNavigationBackground(alpha: newAlpha,color: backgroundColor)
+
+        //titleTextAttributes
+//        let fromAttributesColor:UIColor = fromViewController?.navBarTitleTextAttributes![NSAttributedStringKey.foregroundColor] as! UIColor
+//        let toAttributesColor:UIColor = toViewController?.navBarTitleTextAttributes![NSAttributedStringKey.foregroundColor] as! UIColor
+//        let attributesColor = averageColor(fromColor: fromAttributesColor, toColor: toAttributesColor, percent: percentComplete)
+//        
+////        fromViewController?.navBarTitleTextAttributes = [NSAttributedStringKey.foregroundColor:UIColor.red]
+//        let navBar = UINavigationBar.appearance()
+//        navBar.titleTextAttributes = [NSAttributedStringKey.foregroundColor:UIColor.red]
+//        printColor(attributesColor)
+        
         et_updateInteractiveTransition(percentComplete)
     }
     
@@ -151,13 +162,14 @@ extension UINavigationController {
         var fromBlue: CGFloat = 0
         var fromAlpha: CGFloat = 0
         fromColor.getRed(&fromRed, green: &fromGreen, blue: &fromBlue, alpha: &fromAlpha)
-//        print(fromRed,fromGreen,fromBlue,fromAlpha)
+        print(fromRed,fromGreen,fromBlue,fromAlpha)
         
     }
     
     @objc func et_popToViewController(_ viewController: UIViewController, animated: Bool) -> [UIViewController]? {
         setNeedsNavigationBackground(alpha: viewController.navBarBgAlpha,color: viewController.navBarColor)
         self.navBarBgColors.removeLast()
+        navigationBar.tintColor = viewControllers.first?.navBarTintColor
         return et_popToViewController(viewController, animated: animated)
     }
     
@@ -172,7 +184,7 @@ extension UINavigationController {
         self.navBarBgColors.append(viewController.navBarColor)
         et_pushViewController(viewController, animated: animated)
     }
-
+    
     fileprivate func setNeedsNavigationBackground(alpha: CGFloat, color: UIColor = UIColor.defaultNavBarColor) {
         
         navigationBar.barTintColor = color
@@ -239,6 +251,8 @@ extension UINavigationController: UINavigationBarDelegate {
         return true
     }
     
+    
+    
     private func dealInteractionChanges(_ context: UIViewControllerTransitionCoordinatorContext) {
         let animations: (UITransitionContextViewControllerKey) -> () = {
             let nowAlpha = context.viewController(forKey: $0)?.navBarBgAlpha ?? 0
@@ -268,47 +282,11 @@ extension UINavigationController: UINavigationBarDelegate {
 
 extension UIViewController {
     
-    
-    
-//    private static let onceToken = UUID().uuidString + "UIViewController"
-//
-//    @objc class func swizzle() {
-//        guard self == UIViewController.self else { return }
-//
-//        DispatchQueue.once(token: onceToken) {
-//            let needSwizzleSelectorArr = [
-//                #selector(viewDidAppear(_:)),
-//                //                #selector(viewDidLoad)
-//            ]
-//
-//            for selector in needSwizzleSelectorArr {
-//
-//                let str = ("et_" + selector.description).replacingOccurrences(of: "__", with: "_")
-//                // popToRootViewControllerAnimated: et_popToRootViewControllerAnimated:
-//
-//                let originalMethod = class_getInstanceMethod(self, selector)
-//                let swizzledMethod = class_getInstanceMethod(self, Selector(str))
-//                if originalMethod != nil && swizzledMethod != nil {
-//                    method_exchangeImplementations(originalMethod!, swizzledMethod!)
-//                }
-//            }
-//        }
-//    }
-//
-//    open override func viewDidLoad() {
-//        UIViewControllero.swizzle()
-//
-//    }
-//
-//    @objc func et_viewDidAppear(_ animated: Bool) {
-//        print(1)
-//        et_viewDidAppear(animated)
-//    }
-    
     fileprivate struct AssociatedKeys {
         static var navBarBgAlpha: CGFloat = 1.0
         static var navBarTintColor: UIColor = UIColor.defaultNavBarTintColor
         static var navBarColor: UIColor = UIColor.defaultNavBarColor
+        static var navBarTitleTextAttributes: [NSAttributedStringKey : Any] = [:]
     }
     
     open var navBarBgAlpha: CGFloat {
@@ -335,7 +313,6 @@ extension UIViewController {
                 return UIColor.defaultNavBarTintColor
             }
             return tintColor
-            
         }
         set {
             navigationController?.navigationBar.tintColor = newValue
@@ -351,10 +328,27 @@ extension UIViewController {
             return navBarColor
         }
         set {
-            self.navigationController?.printColor(newValue)
-            navigationController?.navigationBar.barTintColor = newValue
+//            navigationController?.navigationBar.barTintColor = newValue
             objc_setAssociatedObject(self, &AssociatedKeys.navBarColor, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         }
+    }
+    
+    open var navBarTitleTextAttributes: [NSAttributedStringKey : Any]? {
+        get{
+            guard let navBarTitleTextAttributes = objc_getAssociatedObject(self, &AssociatedKeys.navBarTitleTextAttributes) as? [NSAttributedStringKey : Any] else {
+                return [NSAttributedStringKey.foregroundColor:UIColor.black]
+            }
+            return navBarTitleTextAttributes
+        }
+        set {
+            navigationController?.navigationBar.titleTextAttributes = newValue
+            objc_setAssociatedObject(self, &AssociatedKeys.navBarTitleTextAttributes, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+        }
+    }
+    
+    func zz_viewWillAppear(_ animated: Bool) {
+        self.navigationController?.navigationBar.titleTextAttributes = self.navBarTitleTextAttributes
+
     }
     
     
