@@ -56,15 +56,18 @@ extension UINavigationController {
     override open var preferredStatusBarStyle: UIStatusBarStyle {
         return topViewController?.preferredStatusBarStyle ?? .default
     }
-
+    
     open override func viewDidLoad() {
         UINavigationController.swizzle()
+        
         super.viewDidLoad()
+        
     }
     
     private static let onceToken = UUID().uuidString + "UINavigationController"
     private static let onceToken1 = UUID().uuidString + "UIViewController"
-
+    private static let onceToken2 = UUID().uuidString + "UINavigationController"
+    
     class func swizzle() {
         
         if self != UINavigationController.self {
@@ -78,7 +81,7 @@ extension UINavigationController {
                 #selector(popToViewController),
                 #selector(popToRootViewController),
                 #selector(pushViewController(_:animated:)),
-            ]
+                ]
             
             for selector in needSwizzleSelectorArr {
                 
@@ -92,6 +95,9 @@ extension UINavigationController {
                 }
             }
         }
+        
+        
+        
     }
     
     
@@ -109,7 +115,7 @@ extension UINavigationController {
         let toColor = toViewController?.navBarTintColor ?? .blue
         let newColor = averageColor(fromColor: fromColor, toColor: toColor, percent: percentComplete)
         navigationBar.tintColor = newColor
-
+        
         //backgruond Color
         let backgroundFromColor = fromViewController?.navBarColor
         let backgroundToColor = toViewController?.navBarColor
@@ -120,16 +126,11 @@ extension UINavigationController {
         let toAlpha = toViewController?.navBarBgAlpha ?? 0
         let newAlpha = fromAlpha + (toAlpha - fromAlpha) * percentComplete
         setNeedsNavigationBackground(alpha: newAlpha,color: backgroundColor)
-
-        //titleTextAttributes
-//        let fromAttributesColor:UIColor = fromViewController?.navBarTitleTextAttributes![NSAttributedStringKey.foregroundColor] as! UIColor
-//        let toAttributesColor:UIColor = toViewController?.navBarTitleTextAttributes![NSAttributedStringKey.foregroundColor] as! UIColor
-//        let attributesColor = averageColor(fromColor: fromAttributesColor, toColor: toAttributesColor, percent: percentComplete)
-//        
-////        fromViewController?.navBarTitleTextAttributes = [NSAttributedStringKey.foregroundColor:UIColor.red]
-//        let navBar = UINavigationBar.appearance()
-//        navBar.titleTextAttributes = [NSAttributedStringKey.foregroundColor:UIColor.red]
-//        printColor(attributesColor)
+        
+        if self.navBarImageIsDifferent {
+            setNeedsNavigationBackgroundImageView(percentComplete: percentComplete)
+        }
+        
         
         et_updateInteractiveTransition(percentComplete)
     }
@@ -169,40 +170,80 @@ extension UINavigationController {
     @objc func et_popToViewController(_ viewController: UIViewController, animated: Bool) -> [UIViewController]? {
         setNeedsNavigationBackground(alpha: viewController.navBarBgAlpha,color: viewController.navBarColor)
         self.navBarBgColors.removeLast()
-        navigationBar.tintColor = viewControllers.first?.navBarTintColor
-        return et_popToViewController(viewController, animated: animated)
+        navigationBar.tintColor = viewController.navBarTintColor
+        
+        let viewControllers = et_popToViewController(viewController, animated: animated)
+        
+        if self.navBarImageIsDifferent {
+            
+            viewController.navBarFirstImageView?.image = viewController.navBarImage
+            
+            var lastViewController = viewController
+            if self.viewControllers.count > 1 {
+                lastViewController = self.viewControllers[self.viewControllers.count - 2]
+            }
+            
+            viewController.navBarSecondImageView?.image = lastViewController.navBarImage
+            
+        }
+        
+        return viewControllers
     }
     
     @objc func et_popToRootViewControllerAnimated(_ animated: Bool) -> [UIViewController]? {
         setNeedsNavigationBackground(alpha: viewControllers.first?.navBarBgAlpha ?? 0)
         navigationBar.tintColor = viewControllers.first?.navBarTintColor
         self.navBarBgColors = [self.viewControllers.first?.navBarColor ?? UIColor.defaultNavBarColor]
+        
+        if self.navBarImageIsDifferent {
+            self.zz_viewDidAppear(true)
+        }
+        
         return et_popToRootViewControllerAnimated(animated)
     }
     
     @objc func et_pushViewController(_ viewController: UIViewController, animated: Bool) {
         self.navBarBgColors.append(viewController.navBarColor)
+        
+        if self.navBarImageIsDifferent {
+            self.zz_viewDidAppear(true)
+        }
+        
         et_pushViewController(viewController, animated: animated)
+    }
+    
+    fileprivate func setNeedsNavigationBackgroundImageView(percentComplete: CGFloat) {
+        self.navBarFirstImageView?.alpha = 1 - percentComplete
+        //        self.navBarSecondImageView?.alpha = 1
+    }
+    
+    fileprivate func getBarBackgroundView() -> UIView {
+        return navigationBar.subviews[0]
     }
     
     fileprivate func setNeedsNavigationBackground(alpha: CGFloat, color: UIColor = UIColor.defaultNavBarColor) {
         
         navigationBar.barTintColor = color
         
-        let barBackgroundView = navigationBar.subviews[0]
+        let barBackgroundView = getBarBackgroundView()
         let valueForKey = barBackgroundView.value(forKey:)
         
         if let shadowView = valueForKey("_shadowView") as? UIView {
             shadowView.alpha = alpha
             shadowView.isHidden = alpha == 0
         }
-
+        
+        if let imageView = barBackgroundView.subviews.first as? UIImageView {
+            imageView.alpha = alpha
+            imageView.isHidden = alpha == 0
+        }
+        
         if navigationBar.isTranslucent {
             if #available(iOS 10.0, *) {
                 if let backgroundEffectView = valueForKey("_backgroundEffectView") as? UIView, navigationBar.backgroundImage(for: .default) == nil {
                     backgroundEffectView.alpha = alpha
                     backgroundEffectView.subviews.last?.backgroundColor = color
-
+                    
                     return
                 }
                 
@@ -210,14 +251,14 @@ extension UINavigationController {
                 if let adaptiveBackdrop = valueForKey("_adaptiveBackdrop") as? UIView , let backdropEffectView = adaptiveBackdrop.value(forKey: "_backdropEffectView") as? UIView {
                     backdropEffectView.alpha = alpha
                     backdropEffectView.subviews.last?.backgroundColor = color
-
+                    
                     return
                 }
             }
         }
         barBackgroundView.alpha = alpha
-     
-
+        
+        
     }
 }
 
@@ -268,6 +309,12 @@ extension UINavigationController: UINavigationBarDelegate {
                 self.navigationBar.barTintColor = self.navBarBgColors.last
                 animations(.from)
             }
+            
+            if self.navBarImageIsDifferent{
+                self.navBarSecondImageView?.alpha = 1
+                self.navBarFirstImageView?.alpha = 1
+            }
+            
         } else {
             let finishDuration: TimeInterval = context.transitionDuration * Double(1 - context.percentComplete)
             UIView.animate(withDuration: finishDuration) {
@@ -275,8 +322,12 @@ extension UINavigationController: UINavigationBarDelegate {
                 self.navigationBar.barTintColor = self.navBarBgColors.last
                 animations(.to)
             }
+            
+            if self.navBarImageIsDifferent{
+                self.zz_viewDidAppear(true)
+            }
         }
-
+        
     }
 }
 
@@ -287,6 +338,57 @@ extension UIViewController {
         static var navBarTintColor: UIColor = UIColor.defaultNavBarTintColor
         static var navBarColor: UIColor = UIColor.defaultNavBarColor
         static var navBarTitleTextAttributes: [NSAttributedStringKey : Any] = [:]
+        
+        static var navBarImage: UIImage?
+        static var navBarImageIsDifferent: Bool = false
+        
+        static var navBarFirstImageView: UIImageView?
+        static var navBarSecondImageView: UIImageView?
+        
+    }
+    
+    open var navBarImageIsDifferent: Bool{
+        get{
+            guard let navBarImageIsDifferent = objc_getAssociatedObject(self, &AssociatedKeys.navBarImageIsDifferent) as? Bool else {
+                return false
+            }
+            return navBarImageIsDifferent
+        }
+        set{
+            
+            if !newValue {
+                return
+            }
+            
+            if self is UINavigationController {
+                
+                let navCon = self as! UINavigationController
+                
+                if navBarSecondImageView == nil{
+                    let imageView = UIImageView.init(frame: navCon.getBarBackgroundView().bounds)
+                    imageView.autoresizingMask = [.flexibleWidth,.flexibleHeight]
+                    navCon.getBarBackgroundView().addSubview(imageView)
+                    self.navBarSecondImageView = imageView
+                }
+                
+                if navBarFirstImageView == nil{
+                    let imageView = UIImageView.init(frame: navCon.getBarBackgroundView().bounds)
+                    imageView.autoresizingMask = [.flexibleWidth,.flexibleHeight]
+                    navCon.getBarBackgroundView().addSubview(imageView)
+                    self.navBarFirstImageView = imageView
+                    //                    self.navBarFirstImageView = navCon.getBarBackgroundView().subviews.first as? UIImageView
+                }
+                
+                navCon.getBarBackgroundView().bringSubview(toFront: navBarSecondImageView!)
+                navCon.getBarBackgroundView().bringSubview(toFront: navBarFirstImageView!)
+                
+                print(navBarFirstImageView!)
+                print(navBarSecondImageView!)
+                
+            }
+            
+            objc_setAssociatedObject(self, &AssociatedKeys.navBarImageIsDifferent, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+        }
     }
     
     open var navBarBgAlpha: CGFloat {
@@ -328,7 +430,7 @@ extension UIViewController {
             return navBarColor
         }
         set {
-//            navigationController?.navigationBar.barTintColor = newValue
+            //            navigationController?.navigationBar.barTintColor = newValue
             objc_setAssociatedObject(self, &AssociatedKeys.navBarColor, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         }
     }
@@ -346,10 +448,102 @@ extension UIViewController {
         }
     }
     
-    func zz_viewWillAppear(_ animated: Bool) {
-        self.navigationController?.navigationBar.titleTextAttributes = self.navBarTitleTextAttributes
-
+    open var navBarImage: UIImage? {
+        get{
+            guard let navBarImage = objc_getAssociatedObject(self, &AssociatedKeys.navBarImage) as? UIImage else {
+                return nil
+            }
+            return navBarImage
+        }
+        set {
+            
+            if !navBarImageIsDifferent {
+                
+                navigationController?.navigationBar.setBackgroundImage(newValue, for: .default)
+                objc_setAssociatedObject(self, &AssociatedKeys.navBarImage, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+                
+                return
+            }
+            
+            var lastViewController = getNavigationController().viewControllers.last
+            if getNavigationController().viewControllers.count > 1 {
+                lastViewController = getNavigationController().viewControllers[getNavigationController().viewControllers.count - 2]
+            }
+            
+            self.navBarFirstImageView?.alpha = 1
+            self.navBarFirstImageView?.image = newValue
+            
+            self.navBarSecondImageView?.image = lastViewController?.navBarImage
+            self.navBarSecondImageView?.alpha = 1
+            
+            objc_setAssociatedObject(self, &AssociatedKeys.navBarImage, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+        }
     }
     
+    fileprivate var navBarFirstImageView:UIImageView?{
+        get{
+            guard let navBarFirstImageView = objc_getAssociatedObject(getNavigationController(), &AssociatedKeys.navBarFirstImageView) as? UIImageView else {
+                
+                let imageView = UIImageView.init(frame: getNavigationController().getBarBackgroundView().bounds)
+                imageView.autoresizingMask = [.flexibleWidth,.flexibleHeight]
+                getNavigationController().getBarBackgroundView().addSubview(imageView)
+                self.navBarFirstImageView = imageView
+                
+                return imageView
+            }
+            return navBarFirstImageView
+        }
+        set{
+            objc_setAssociatedObject(getNavigationController(), &AssociatedKeys.navBarFirstImageView, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+        }
+    }
+    
+    fileprivate var navBarSecondImageView:UIImageView?{
+        get{
+            guard let navBarSecondImageView = objc_getAssociatedObject(getNavigationController(), &AssociatedKeys.navBarSecondImageView) as? UIImageView else {
+                return nil
+            }
+            return navBarSecondImageView
+        }
+        set{
+            objc_setAssociatedObject(getNavigationController(), &AssociatedKeys.navBarSecondImageView, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+        }
+    }
+    
+    fileprivate func getNavigationController() -> UINavigationController {
+        var con : UINavigationController
+        
+        if self is UINavigationController {
+            con = self as! UINavigationController
+        }else{
+            con = self.navigationController ?? UINavigationController.init()
+        }
+        
+        return con
+    }
+    
+    
+    func zz_viewWillAppear(_ animated: Bool) {
+//        self.navigationController?.navigationBar.titleTextAttributes = self.navBarTitleTextAttributes
+        
+    }
+    
+    
+    fileprivate func zz_viewDidAppear(_ animated: Bool) {
+        
+        let viewController = self.getNavigationController().viewControllers.last
+        var lastViewController = viewController
+        if self.getNavigationController().viewControllers.count > 1 {
+            lastViewController = self.getNavigationController().viewControllers[self.getNavigationController().viewControllers.count - 2]
+        }
+        
+        UIView.animate(withDuration: 0.25) {
+            self.navBarFirstImageView?.alpha = 1
+            
+            viewController?.navBarFirstImageView?.image = viewController?.navBarImage
+            viewController?.navBarSecondImageView?.image = lastViewController?.navBarImage
+        }
+        
+    }
     
 }
